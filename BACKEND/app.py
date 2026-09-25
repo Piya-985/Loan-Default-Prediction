@@ -246,7 +246,7 @@ def get_models():
             "name": "Gradient Descent",
             "type": "Regression",
             "purpose": "Predict Loan Amount",
-            "available": model_available["gradient_descent"],
+            "available": model_available("gradient_descent"),
             **get_regression_metrics("gradient_descent")
         },
         {
@@ -254,7 +254,7 @@ def get_models():
             "name": "Logistic Regression",
             "type": "Classification",
             "purpose": "Predict Loan Default",
-            "available": model_available["logistic_regression"],
+            "available": model_available("logistic_regression"),
             **get_classification_metrics("logistic_regression")
         },
         {
@@ -262,7 +262,7 @@ def get_models():
             "name": "Decision Tree",
             "type": "Classification",
             "purpose": "Predict Loan Default",
-            "available": model_available["decision_tree"],
+            "available": model_available("decision_tree"),
             **get_classification_metrics("decision_tree")
         },
         {
@@ -270,7 +270,7 @@ def get_models():
             "name": "Random Forest",
             "type": "Classification",
             "purpose": "Predict Loan Default",
-            "available": model_available["random_forest"],
+            "available": model_available("random_forest"),
             **get_classification_metrics("random_forest")
         },
         {
@@ -278,7 +278,7 @@ def get_models():
             "name": "KNN",
             "type": "Classification",
             "purpose": "Predict Loan Default",
-            "available": model_available["knn"],
+            "available": model_available("knn"),
             **get_classification_metrics("knn")
         }
     ]
