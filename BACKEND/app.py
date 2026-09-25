@@ -84,11 +84,12 @@ MODEL_NAMES = [
     "knn"
 ]
 
-MODELS = {
-    name: load_model(name)
-    for name in MODEL_NAMES
-}
+MODELS = {}
 
+
+def model_available(name):
+    path = os.path.join(MODELS_DIR, f"{name}.pkl")
+    return os.path.exists(path)
 
 # ============================================================
 # MODEL DISPLAY NAMES
@@ -237,7 +238,7 @@ def get_models():
             "name": "Linear Regression",
             "type": "Regression",
             "purpose": "Predict Loan Amount",
-            "available": MODELS["linear_regression"] is not None,
+            "available": model_available("linear_regression"),
             **get_regression_metrics("linear_regression")
         },
         {
@@ -245,7 +246,7 @@ def get_models():
             "name": "Gradient Descent",
             "type": "Regression",
             "purpose": "Predict Loan Amount",
-            "available": MODELS["gradient_descent"] is not None,
+            "available": model_available["gradient_descent"],
             **get_regression_metrics("gradient_descent")
         },
         {
@@ -253,7 +254,7 @@ def get_models():
             "name": "Logistic Regression",
             "type": "Classification",
             "purpose": "Predict Loan Default",
-            "available": MODELS["logistic_regression"] is not None,
+            "available": model_available["logistic_regression"],
             **get_classification_metrics("logistic_regression")
         },
         {
@@ -261,7 +262,7 @@ def get_models():
             "name": "Decision Tree",
             "type": "Classification",
             "purpose": "Predict Loan Default",
-            "available": MODELS["decision_tree"] is not None,
+            "available": model_available["decision_tree"],
             **get_classification_metrics("decision_tree")
         },
         {
@@ -269,7 +270,7 @@ def get_models():
             "name": "Random Forest",
             "type": "Classification",
             "purpose": "Predict Loan Default",
-            "available": MODELS["random_forest"] is not None,
+            "available": model_available["random_forest"],
             **get_classification_metrics("random_forest")
         },
         {
@@ -277,7 +278,7 @@ def get_models():
             "name": "KNN",
             "type": "Classification",
             "purpose": "Predict Loan Default",
-            "available": MODELS["knn"] is not None,
+            "available": model_available["knn"],
             **get_classification_metrics("knn")
         }
     ]
