@@ -5,35 +5,29 @@ import {
   ArrowRight,
   UserCheck,
   ShieldAlert,
-  AlertTriangle,
   RefreshCw,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
 
-const PAGE_SIZE = 10;
+const TOTAL_RECORDS = 10;
+const PAGE_SIZE = 5;
 
 export default function SampleDataSection({ onSelectSample }) {
-  const [sampleDataset, setSampleDataset] = useState([]);
+  const [allRecords, setAllRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  // Only 2 pages: 1 (records 1-5) and 2 (records 6-10)
   const [page, setPage] = useState(1);
-  const [totalRecords, setTotalRecords] = useState(0);
 
-  const fetchSamples = async (pageNumber = 1) => {
+  const fetchSamples = async () => {
     setLoading(true);
     setError(null);
-
     try {
-      const offset = (pageNumber - 1) * PAGE_SIZE;
-
-      const data = await getSampleData(PAGE_SIZE, offset);
-
-      setSampleDataset(data.samples || []);
-      setTotalRecords(data.total || 0);
-      setPage(pageNumber);
-
+      // Fetch exactly 10 records from the beginning of the dataset
+      const data = await getSampleData(TOTAL_RECORDS, 0);
+      // Enforce max 10 records regardless of API response
+      setAllRecords((data.samples || []).slice(0, TOTAL_RECORDS));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -42,22 +36,15 @@ export default function SampleDataSection({ onSelectSample }) {
   };
 
   useEffect(() => {
-    fetchSamples(1);
+    fetchSamples();
   }, []);
 
-  const totalPages = Math.ceil(totalRecords / PAGE_SIZE);
+  // Client-side slicing: page 1 = indices 0-4, page 2 = indices 5-9
+  const startIndex = (page - 1) * PAGE_SIZE;
+  const visibleRecords = allRecords.slice(startIndex, startIndex + PAGE_SIZE);
 
-  const handlePrevious = () => {
-    if (page > 1) {
-      fetchSamples(page - 1);
-    }
-  };
-
-  const handleNext = () => {
-    if (page < totalPages) {
-      fetchSamples(page + 1);
-    }
-  };
+  const isFirstPage = page === 1;
+  const isLastPage = page === 2;
 
   return (
     <div
@@ -92,14 +79,9 @@ export default function SampleDataSection({ onSelectSample }) {
               gap: '10px'
             }}
           >
-            <Database
-              size={24}
-              style={{ color: 'var(--primary-accent)' }}
-            />
-
+            <Database size={24} style={{ color: 'var(--primary-accent)' }} />
             ML Project Sample Dataset Records
           </h3>
-
           <p
             style={{
               fontSize: '0.9rem',
@@ -112,15 +94,12 @@ export default function SampleDataSection({ onSelectSample }) {
           </p>
         </div>
 
-        <div
-          style={{
-            display: 'flex',
-            gap: '10px',
-            alignItems: 'center'
-          }}
-        >
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <button
-            onClick={() => fetchSamples(page)}
+            onClick={() => {
+              setPage(1);
+              fetchSamples();
+            }}
             disabled={loading}
             style={{
               padding: '6px 14px',
@@ -136,12 +115,8 @@ export default function SampleDataSection({ onSelectSample }) {
               gap: '6px'
             }}
           >
-            <RefreshCw
-              size={14}
-              className={loading ? 'spin' : ''}
-            />
-
-            Refresh Page
+            <RefreshCw size={14} className={loading ? 'spin' : ''} />
+            Refresh
           </button>
 
           <span
@@ -155,12 +130,12 @@ export default function SampleDataSection({ onSelectSample }) {
               color: 'var(--text-sub)'
             }}
           >
-            {totalRecords.toLocaleString()} Dataset Records
+            {TOTAL_RECORDS} Sample Records
           </span>
         </div>
       </div>
 
-      {/* Loading */}
+      {/* Loading state */}
       {loading ? (
         <div
           style={{
@@ -185,25 +160,23 @@ export default function SampleDataSection({ onSelectSample }) {
         </div>
       ) : (
         <>
-          {/* Sample cards */}
+          {/* 5 record cards for the current page */}
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns:
-                'repeat(auto-fit, minmax(280px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
               gap: '20px'
             }}
           >
-            {sampleDataset.map((item) => {
-              let badgeBg = 'var(--risk-low-bg)';
-              let badgeColor = 'var(--risk-low-text)';
-              let BadgeIcon = UserCheck;
-
-              if (item.expectedOutcome === 'Default') {
-                badgeBg = 'var(--risk-high-bg)';
-                badgeColor = 'var(--risk-high-text)';
-                BadgeIcon = ShieldAlert;
-              }
+            {visibleRecords.map((item) => {
+              const isDefault = item.expectedOutcome === 'Default';
+              const badgeBg = isDefault
+                ? 'var(--risk-high-bg)'
+                : 'var(--risk-low-bg)';
+              const badgeColor = isDefault
+                ? 'var(--risk-high-text)'
+                : 'var(--risk-low-text)';
+              const BadgeIcon = isDefault ? ShieldAlert : UserCheck;
 
               return (
                 <div
@@ -239,7 +212,6 @@ export default function SampleDataSection({ onSelectSample }) {
                       >
                         {item.LoanID}
                       </span>
-
                       <span
                         style={{
                           fontSize: '0.72rem',
@@ -280,38 +252,28 @@ export default function SampleDataSection({ onSelectSample }) {
                     >
                       <div>
                         Income:{' '}
-                        <strong>
-                          ${Number(item.Income).toLocaleString()}
-                        </strong>
+                        <strong>${Number(item.Income).toLocaleString()}</strong>
                       </div>
-
                       <div>
                         Loan:{' '}
                         <strong>
                           ${Number(item.LoanAmount).toLocaleString()}
                         </strong>
                       </div>
-
                       <div>
-                        Credit Score:{' '}
-                        <strong>{item.CreditScore}</strong>
+                        Credit Score: <strong>{item.CreditScore}</strong>
                       </div>
-
                       <div>
                         DTI Ratio:{' '}
                         <strong>
                           {(Number(item.DTIRatio) * 100).toFixed(0)}%
                         </strong>
                       </div>
-
                       <div>
-                        Interest:{' '}
-                        <strong>{item.InterestRate}%</strong>
+                        Interest: <strong>{item.InterestRate}%</strong>
                       </div>
-
                       <div>
-                        Status:{' '}
-                        <strong>{item.EmploymentType}</strong>
+                        Status: <strong>{item.EmploymentType}</strong>
                       </div>
                     </div>
                   </div>
@@ -345,75 +307,78 @@ export default function SampleDataSection({ onSelectSample }) {
             })}
           </div>
 
-          {/* Pagination */}
+          {/*
+            Arrow pagination:
+            - Page 1: only right arrow (→) visible, left arrow hidden
+            - Page 2: only left arrow (←) visible, right arrow hidden
+            - No numbered pagination, no URL navigation
+          */}
           <div
             style={{
               display: 'flex',
-              justifyContent: 'center',
+              justifyContent: 'space-between',
               alignItems: 'center',
-              gap: '16px',
               marginTop: '28px',
-              flexWrap: 'wrap'
+              minHeight: '44px'
             }}
           >
-            <button
-              type="button"
-              onClick={handlePrevious}
-              disabled={page === 1 || loading}
-              style={{
-                padding: '8px 16px',
-                borderRadius: 'var(--radius-pill)',
-                border: '1px solid var(--border-color)',
-                background:
-                  page === 1
-                    ? 'var(--bg-secondary)'
-                    : 'var(--bg-card)',
-                color: 'var(--text-main)',
-                cursor:
-                  page === 1 ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              <ChevronLeft size={16} />
-              Previous
-            </button>
+            {/* Left arrow — shown only on page 2 */}
+            {!isFirstPage ? (
+              <button
+                type="button"
+                onClick={() => setPage(1)}
+                aria-label="Previous 5 records"
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: 'var(--radius-pill)',
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-main)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  transition: 'all var(--transition-fast)'
+                }}
+              >
+                <ChevronLeft size={18} />
+                Previous
+              </button>
+            ) : (
+              // Invisible placeholder so the right arrow stays right-aligned
+              <div />
+            )}
 
-            <span
-              style={{
-                fontWeight: 700,
-                color: 'var(--text-main)'
-              }}
-            >
-              Page {page} of {totalPages}
-            </span>
-
-            <button
-              type="button"
-              onClick={handleNext}
-              disabled={page >= totalPages || loading}
-              style={{
-                padding: '8px 16px',
-                borderRadius: 'var(--radius-pill)',
-                border: '1px solid var(--border-color)',
-                background:
-                  page >= totalPages
-                    ? 'var(--bg-secondary)'
-                    : 'var(--bg-card)',
-                color: 'var(--text-main)',
-                cursor:
-                  page >= totalPages
-                    ? 'not-allowed'
-                    : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              Next
-              <ChevronRight size={16} />
-            </button>
+            {/* Right arrow — shown only on page 1 */}
+            {!isLastPage ? (
+              <button
+                type="button"
+                onClick={() => setPage(2)}
+                aria-label="Next 5 records"
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: 'var(--radius-pill)',
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-main)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  transition: 'all var(--transition-fast)'
+                }}
+              >
+                Next
+                <ChevronRight size={18} />
+              </button>
+            ) : (
+              // Invisible placeholder so the left arrow stays left-aligned
+              <div />
+            )}
           </div>
         </>
       )}

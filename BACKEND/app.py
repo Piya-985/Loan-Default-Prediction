@@ -1,3 +1,7 @@
+#http://127.0.0.1:5001/health
+#http://127.0.0.1:5001/api/models
+#gunicorn --bind 0.0.0.0:5001 --workers 2 --timeout 120 app:app
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
