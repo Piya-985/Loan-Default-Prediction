@@ -9,4 +9,4 @@ __pycache__/
 venv/
 .DS_Store
 .vercel/
-BACKEND/model/random_forest.pkl
+
